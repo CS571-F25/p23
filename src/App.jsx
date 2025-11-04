@@ -1,0 +1,40 @@
+import React from 'react';
+import { createHashRouter, RouterProvider, Outlet } from 'react-router';
+import Navigation from './components/Navigation';
+import Home from './components/Home';
+import About from './components/About';
+import './App.css';
+
+const Layout = () => {
+  return (
+    <div className="min-vh-100 d-flex flex-column">
+      <Navigation />
+      <main className="flex-grow-1">
+        <Outlet />
+      </main>
+    </div>
+  );
+};
+
+const router = createHashRouter([
+  {
+    path: "/",
+    element: <Layout />,
+    children: [
+      {
+        index: true,
+        element: <Home />,
+      },
+      {
+        path: "about",
+        element: <About />,
+      },
+    ],
+  },
+]);
+
+function App() {
+  return <RouterProvider router={router} />;
+}
+
+export default App
