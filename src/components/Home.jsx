@@ -48,8 +48,11 @@ const Home = () => {
                   <Card.Body className="text-center p-4">
                     <Card.Title className="text-danger h4 mb-3">Program Information</Card.Title>
                     <Card.Text className="text-muted">
-                      Detailed information about UW-Madison graduate programs and requirements.
+                      Detailed information about universities and graduate programs nationwide.
                     </Card.Text>
+                    <Button as={Link} to="/programs" variant="outline-danger" className="mt-2">
+                      Explore Programs
+                    </Button>
                   </Card.Body>
                 </Card>
               </Col>

@@ -15,6 +15,9 @@ const Navigation = () => {
             <Nav.Link as={Link} to="/" className="fw-semibold mx-2">
               Home
             </Nav.Link>
+            <Nav.Link as={Link} to="/programs" className="fw-semibold mx-2">
+              Programs
+            </Nav.Link>
             <Nav.Link as={Link} to="/about" className="fw-semibold mx-2">
               About
             </Nav.Link>

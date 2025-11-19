@@ -3,6 +3,7 @@ import { createHashRouter, RouterProvider, Outlet } from 'react-router';
 import Navigation from './components/Navigation';
 import Home from './components/Home';
 import About from './components/About';
+import ProgramInfo from './components/ProgramInfo';
 import './App.css';
 
 const Layout = () => {
@@ -24,6 +25,10 @@ const router = createHashRouter([
       {
         index: true,
         element: <Home />,
+      },
+      {
+        path: "programs",
+        element: <ProgramInfo />,
       },
       {
         path: "about",
