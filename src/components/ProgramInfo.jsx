@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Form, Button, Spinner, Alert } from 'react-bootstrap';
+import { Container, Row, Col, Alert, Spinner, Pagination, Button, Modal } from 'react-bootstrap';
 import SchoolCard from './SchoolCard';
+import ProgramGuide from './ProgramGuide';
+import FilterBar from './SearchBar';
 import API_CONFIG from '../config/api';
 
 const ProgramInfo = () => {
@@ -10,16 +12,13 @@ const ProgramInfo = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedState, setSelectedState] = useState('');
   const [hasSearched, setHasSearched] = useState(false);
+  const [totalResults, setTotalResults] = useState(0);
+  const [sortBy, setSortBy] = useState('');
+  const [currentPage, setCurrentPage] = useState(0);
+  const [perPage] = useState(20);
+  const [showHelp, setShowHelp] = useState(false);
 
-  const states = [
-    'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
-    'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
-    'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
-    'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
-    'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
-  ];
-
-  const fetchSchools = async () => {
+  const fetchSchools = async (page = 0) => {
     setLoading(true);
     setError(null);
     setHasSearched(true);
@@ -52,8 +51,11 @@ const ProgramInfo = () => {
       ];
       
       params.push(`fields=${fields.join(',')}`);
-      params.push('per_page=20');
-      params.push('sort=latest.student.size:desc');
+      params.push(`per_page=${perPage}`);
+      params.push(`page=${page}`);
+      if (sortBy) {
+        params.push(`sort=${sortBy}`);
+      }
       
       if (params.length > 0) {
         url += '&' + params.join('&');
@@ -73,6 +75,8 @@ const ProgramInfo = () => {
       
       const data = await response.json();
       setSchools(data.results || []);
+      setTotalResults(data.metadata?.total || 0);
+      setCurrentPage(page);
     } catch (err) {
       setError(`Failed to fetch school data: ${err.message}`);
       setSchools([]);
@@ -81,41 +85,34 @@ const ProgramInfo = () => {
     }
   };
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim() || selectedState) {
-      fetchSchools();
-    }
-  };
-
   const clearSearch = () => {
     setSearchQuery('');
     setSelectedState('');
-    setSchools([]);
+    setSortBy('');
+    setCurrentPage(0);
     setError(null);
-    setHasSearched(false);
   };
 
-  // Load popular Wisconsin schools on component mount
+  // Real-time filtering - fetch when filters change
   useEffect(() => {
-    const loadWisconsinSchools = async () => {
-      setLoading(true);
-      try {
-        const url = `${API_CONFIG.BASE_URL}?api_key=${API_CONFIG.API_KEY}&school.state=WI&fields=id,school.name,school.city,school.state,school.school_url,latest.student.size,latest.admissions.admission_rate.overall,latest.cost.tuition.in_state,latest.cost.tuition.out_of_state&per_page=10&sort=latest.student.size:desc`;
-        
-        const response = await fetch(url);
-        if (response.ok) {
-          const data = await response.json();
-          setSchools(data.results || []);
-        }
-      } catch (err) {
-        console.error('Failed to load initial schools:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    const delayDebounceFn = setTimeout(() => {
+      setCurrentPage(0);
+      fetchSchools(0);
+    }, 500); // 500ms debounce for name search
 
-    loadWisconsinSchools();
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery, selectedState, sortBy]);
+
+  // Fetch when page changes
+  useEffect(() => {
+    if (currentPage > 0) {
+      fetchSchools(currentPage);
+    }
+  }, [currentPage]);
+
+  // Load all schools on component mount
+  useEffect(() => {
+    fetchSchools(0);
   }, []);
 
   return (
@@ -132,53 +129,20 @@ const ProgramInfo = () => {
         </Container>
       </div>
 
-      {/* Search Section */}
+      {/* Filter Section */}
       <Container fluid className="py-4 bg-light">
         <Row className="justify-content-center">
-          <Col lg={8} xl={6}>
-            <Form onSubmit={handleSearch}>
-              <Row className="g-3">
-                <Col md={5}>
-                  <Form.Control
-                    type="text"
-                    placeholder="Search by school name..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </Col>
-                <Col md={3}>
-                  <Form.Select
-                    value={selectedState}
-                    onChange={(e) => setSelectedState(e.target.value)}
-                  >
-                    <option value="">All States</option>
-                    {states.map(state => (
-                      <option key={state} value={state}>{state}</option>
-                    ))}
-                  </Form.Select>
-                </Col>
-                <Col md={2}>
-                  <Button 
-                    type="submit" 
-                    variant="danger" 
-                    className="w-100"
-                    disabled={loading}
-                  >
-                    {loading ? <Spinner size="sm" /> : 'Search'}
-                  </Button>
-                </Col>
-                <Col md={2}>
-                  <Button 
-                    type="button" 
-                    variant="outline-secondary" 
-                    className="w-100"
-                    onClick={clearSearch}
-                  >
-                    Clear
-                  </Button>
-                </Col>
-              </Row>
-            </Form>
+          <Col lg={10} xl={8}>
+            <FilterBar
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              selectedState={selectedState}
+              setSelectedState={setSelectedState}
+              sortBy={sortBy}
+              setSortBy={setSortBy}
+              onClear={clearSearch}
+              onHelp={() => setShowHelp(true)}
+            />
           </Col>
         </Row>
       </Container>
@@ -193,13 +157,6 @@ const ProgramInfo = () => {
               </Alert>
             )}
 
-            {!hasSearched && !loading && (
-              <div className="text-center mb-4">
-                <h3 className="text-muted">Popular Wisconsin Universities</h3>
-                <p className="text-muted">Use the search above to find schools by name or state</p>
-              </div>
-            )}
-
             {loading && (
               <div className="text-center py-5">
                 <Spinner animation="border" variant="danger" size="lg" />
@@ -207,17 +164,19 @@ const ProgramInfo = () => {
               </div>
             )}
 
-            {!loading && schools.length === 0 && hasSearched && (
+            {!loading && schools.length === 0 && (
               <div className="text-center py-5">
                 <h4 className="text-muted">No schools found</h4>
-                <p className="text-muted">Try adjusting your search criteria</p>
+                <p className="text-muted">Try adjusting your filters</p>
               </div>
             )}
 
             {!loading && schools.length > 0 && (
               <>
-                <div className="mb-4">
-                  <h4 className="text-center">Found {schools.length} school{schools.length !== 1 ? 's' : ''}</h4>
+                <div className="mb-4 text-center">
+                  <p className="h4">
+                    Showing {currentPage * perPage + 1}-{Math.min((currentPage + 1) * perPage, totalResults)} of {totalResults.toLocaleString()} school{totalResults !== 1 ? 's' : ''}
+                  </p>
                 </div>
                 <Row className="g-4">
                   {schools.map((school) => (
@@ -226,11 +185,76 @@ const ProgramInfo = () => {
                     </Col>
                   ))}
                 </Row>
+                
+                {/* Pagination Controls */}
+                {totalResults > perPage && (
+                  <div className="d-flex justify-content-center mt-5">
+                    <Pagination>
+                      <Pagination.First 
+                        onClick={() => setCurrentPage(0)} 
+                        disabled={currentPage === 0}
+                      />
+                      <Pagination.Prev 
+                        onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))} 
+                        disabled={currentPage === 0}
+                      />
+                      
+                      {[...Array(Math.min(5, Math.ceil(totalResults / perPage)))].map((_, idx) => {
+                        const totalPages = Math.ceil(totalResults / perPage);
+                        let pageNum;
+                        
+                        if (totalPages <= 5) {
+                          pageNum = idx;
+                        } else if (currentPage < 3) {
+                          pageNum = idx;
+                        } else if (currentPage > totalPages - 4) {
+                          pageNum = totalPages - 5 + idx;
+                        } else {
+                          pageNum = currentPage - 2 + idx;
+                        }
+                        
+                        return (
+                          <Pagination.Item
+                            key={pageNum}
+                            active={pageNum === currentPage}
+                            onClick={() => setCurrentPage(pageNum)}
+                          >
+                            {pageNum + 1}
+                          </Pagination.Item>
+                        );
+                      })}
+                      
+                      <Pagination.Next 
+                        onClick={() => setCurrentPage(prev => Math.min(Math.ceil(totalResults / perPage) - 1, prev + 1))} 
+                        disabled={currentPage >= Math.ceil(totalResults / perPage) - 1}
+                      />
+                      <Pagination.Last 
+                        onClick={() => setCurrentPage(Math.ceil(totalResults / perPage) - 1)} 
+                        disabled={currentPage >= Math.ceil(totalResults / perPage) - 1}
+                      />
+                    </Pagination>
+                  </div>
+                )}
               </>
             )}
           </Col>
         </Row>
       </Container>
+
+      {/* Help Modal */}
+      <Modal show={showHelp} onHide={() => setShowHelp(false)} size="lg" centered>
+        <Modal.Header closeButton>
+          <Modal.Title>How to Use Program Information</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <ProgramGuide />
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="danger" onClick={() => setShowHelp(false)}>
+            Got it!
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };

@@ -35,19 +35,22 @@ const Home = () => {
             <Row className="g-4">
               <Col lg={4} md={6} className="mb-4">
                 <Card className="h-100 shadow border-0">
-                  <Card.Body className="text-center p-4">
+                  <Card.Body className="text-center p-4 d-flex flex-column">
                     <Card.Title className="text-danger h4 mb-3">Application Resources</Card.Title>
-                    <Card.Text className="text-muted">
-                      Comprehensive guides and resources to help you navigate the application process.
+                    <Card.Text className="text-muted flex-grow-1">
+                      Share tips, advice, and resources for graduate school applications.
                     </Card.Text>
+                    <Button as={Link} to="/resources" variant="outline-danger" className="mt-2">
+                      Browse Resources
+                    </Button>
                   </Card.Body>
                 </Card>
               </Col>
               <Col lg={4} md={6} className="mb-4">
                 <Card className="h-100 shadow border-0">
-                  <Card.Body className="text-center p-4">
+                  <Card.Body className="text-center p-4 d-flex flex-column">
                     <Card.Title className="text-danger h4 mb-3">Program Information</Card.Title>
-                    <Card.Text className="text-muted">
+                    <Card.Text className="text-muted flex-grow-1">
                       Detailed information about universities and graduate programs nationwide.
                     </Card.Text>
                     <Button as={Link} to="/programs" variant="outline-danger" className="mt-2">
@@ -58,11 +61,14 @@ const Home = () => {
               </Col>
               <Col lg={4} md={6} className="mb-4">
                 <Card className="h-100 shadow border-0">
-                  <Card.Body className="text-center p-4">
+                  <Card.Body className="text-center p-4 d-flex flex-column">
                     <Card.Title className="text-danger h4 mb-3">Community Support</Card.Title>
-                    <Card.Text className="text-muted">
-                      Connect with fellow applicants and current graduate students for guidance and support.
+                    <Card.Text className="text-muted flex-grow-1">
+                      Connect, share experiences, and support each other in your journey.
                     </Card.Text>
+                    <Button as={Link} to="/community" variant="outline-danger" className="mt-2">
+                      Join Community
+                    </Button>
                   </Card.Body>
                 </Card>
               </Col>

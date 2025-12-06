@@ -4,6 +4,9 @@ import Navigation from './components/Navigation';
 import Home from './components/Home';
 import About from './components/About';
 import ProgramInfo from './components/ProgramInfo';
+import Auth from './components/Auth';
+import ApplicationResources from './components/ApplicationResources';
+import CommunitySupport from './components/CommunitySupport';
 import './App.css';
 
 const Layout = () => {
@@ -33,6 +36,18 @@ const router = createHashRouter([
       {
         path: "about",
         element: <About />,
+      },
+      {
+        path: "auth",
+        element: <Auth />,
+      },
+      {
+        path: "resources",
+        element: <ApplicationResources />,
+      },
+      {
+        path: "community",
+        element: <CommunitySupport />,
       },
     ],
   },
